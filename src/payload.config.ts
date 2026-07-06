@@ -49,11 +49,13 @@ export default buildConfig({
   cors: [
     'http://localhost:3000',
     'http://localhost:3001',
+    'https://multi-ventor-frontent.vercel.app',
     process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3001',
   ],
   csrf: [
     'http://localhost:3000',
     'http://localhost:3001',
+    'https://multi-ventor-frontent.vercel.app',
     process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3001',
   ],
   collections: [Users, Media, Authors, Categories, Articles, Comments, Subscribers],

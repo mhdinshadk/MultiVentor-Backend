@@ -10,7 +10,7 @@ export const revalidateFrontend: CollectionAfterChangeHook = async ({
   const wasPublished = previousDoc?._status === 'published'
 
   if (isPublished || wasPublished) {
-    const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'
+    const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://multi-ventor-frontent.vercel.app'
     const secret = process.env.REVALIDATION_SECRET || 'revalidate-secret'
 
     try {
