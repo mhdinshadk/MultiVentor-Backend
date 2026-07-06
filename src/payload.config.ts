@@ -5,6 +5,7 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import { s3Storage } from '@payloadcms/storage-s3'
+import { payloadCloudinaryPlugin } from '@jhb.software/payload-cloudinary-plugin'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
@@ -13,13 +14,32 @@ import { Categories } from './collections/Categories'
 import { Articles } from './collections/Articles'
 import { Comments } from './collections/Comments'
 import { Subscribers } from './collections/Subscribers'
+import { getCloudinaryCredentials } from './utilities/cloudinaryEnv'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-const plugins: any[] = []
+const plugins: Parameters<typeof buildConfig>[0]['plugins'] = []
 
-if (process.env.S3_BUCKET) {
+const cloudinaryCredentials = getCloudinaryCredentials()
+
+if (cloudinaryCredentials) {
+  plugins.push(
+    payloadCloudinaryPlugin({
+      collections: {
+        media: true,
+      },
+      cloudName: cloudinaryCredentials.cloudName,
+      credentials: {
+        apiKey: cloudinaryCredentials.apiKey,
+        apiSecret: cloudinaryCredentials.apiSecret,
+      },
+      folder: 'multi-vendor-blog',
+      useFilename: true,
+      clientUploads: false,
+    }),
+  )
+} else if (process.env.S3_BUCKET) {
   plugins.push(
     s3Storage({
       collections: {
@@ -35,7 +55,11 @@ if (process.env.S3_BUCKET) {
         endpoint: process.env.S3_ENDPOINT || undefined,
         forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
       },
-    })
+    }),
+  )
+} else if (process.env.NODE_ENV === 'production') {
+  console.warn(
+    '[Media] No Cloudinary or S3 storage configured. Media uploads will use local disk and may not persist on Render.',
   )
 }
 

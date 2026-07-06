@@ -1,46 +1,39 @@
 import { v2 as cloudinary } from 'cloudinary'
+import { getCloudinaryCredentials, isCloudinaryConfigured } from '../../utilities/cloudinaryEnv'
 
-export const GET = async (request: Request) => {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || ''
-  const apiKey = process.env.CLOUDINARY_API_KEY || ''
-  const apiSecret = process.env.CLOUDINARY_API_SECRET || ''
-  const cloudinaryUrl = process.env.CLOUDINARY_URL || ''
+export const GET = async () => {
+  const credentials = getCloudinaryCredentials()
 
   const status = {
-    cloudNameSet: !!cloudName && cloudName !== 'your_cloud_name_here',
-    apiKeySet: !!apiKey && apiKey !== 'your_api_key_here',
-    apiSecretSet: !!apiSecret && apiSecret !== 'your_api_secret_here',
-    cloudinaryUrlSet: !!cloudinaryUrl && !cloudinaryUrl.includes('your_api_secret'),
-    cloudNameLength: cloudName.length,
-    apiKeyLength: apiKey.length,
-    apiSecretLength: apiSecret.length,
-    cloudinaryUrlLength: cloudinaryUrl.length,
+    configured: isCloudinaryConfigured(),
+    cloudNameSet: !!credentials?.cloudName,
+    apiKeySet: !!credentials?.apiKey,
+    apiSecretSet: !!credentials?.apiSecret,
     testUpload: 'Not run yet',
   }
 
-  if (status.cloudinaryUrlSet || (status.cloudNameSet && status.apiKeySet && status.apiSecretSet)) {
-    try {
-      if (!status.cloudinaryUrlSet) {
-        cloudinary.config({
-          cloud_name: cloudName,
-          api_key: apiKey,
-          api_secret: apiSecret,
-        })
-      }
+  if (credentials) {
+    cloudinary.config({
+      cloud_name: credentials.cloudName,
+      api_key: credentials.apiKey,
+      api_secret: credentials.apiSecret,
+    })
 
-      // Try uploading a 1x1 transparent pixel base64 image
+    try {
       const pixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
       const uploadResult = await cloudinary.uploader.upload(pixel, {
         folder: 'test',
-        public_id: 'test_pixel_render',
+        public_id: `test_pixel_${Date.now()}`,
       })
 
       status.testUpload = 'Success: ' + uploadResult.secure_url
-    } catch (err: any) {
-      status.testUpload = 'Error: ' + (err.message || JSON.stringify(err))
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : JSON.stringify(err)
+      status.testUpload = 'Error: ' + message
     }
   } else {
-    status.testUpload = 'Error: Neither CLOUDINARY_URL nor individual credentials are configured.'
+    status.testUpload =
+      'Error: Set CLOUDINARY_URL or CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET on Render.'
   }
 
   return Response.json(status)
