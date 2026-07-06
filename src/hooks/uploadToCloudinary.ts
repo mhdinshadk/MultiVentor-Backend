@@ -68,8 +68,9 @@ export const uploadToCloudinary: CollectionBeforeChangeHook = async ({
       // Override the url to use Cloudinary's secure URL
       data.url = uploadResult.secure_url
       data.cloudinaryUrl = uploadResult.secure_url
-    } catch (err) {
+    } catch (err: any) {
       console.error('[Cloudinary] Upload hook error:', err)
+      throw new Error(`Cloudinary upload failed: ${err?.message || err}`)
     }
   }
 
