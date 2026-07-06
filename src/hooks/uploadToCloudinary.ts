@@ -17,8 +17,11 @@ export const uploadToCloudinary: CollectionBeforeChangeHook = async ({
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME
     const apiKey = process.env.CLOUDINARY_API_KEY
     const apiSecret = process.env.CLOUDINARY_API_SECRET
+    const cloudinaryUrl = process.env.CLOUDINARY_URL
 
-    if (!cloudName || !apiKey || !apiSecret) {
+    const isConfigured = !!cloudinaryUrl || (!!cloudName && !!apiKey && !!apiSecret)
+
+    if (!isConfigured) {
       console.warn('Cloudinary credentials are not fully configured in environment variables.')
       return data
     }
@@ -33,12 +36,14 @@ export const uploadToCloudinary: CollectionBeforeChangeHook = async ({
       // Dynamically import cloudinary SDK (server-only)
       const { v2: cloudinary } = await import('cloudinary')
 
-      // Configure Cloudinary on the server
-      cloudinary.config({
-        cloud_name: cloudName,
-        api_key: apiKey,
-        api_secret: apiSecret,
-      })
+      // Configure Cloudinary on the server only if CLOUDINARY_URL is not set (otherwise SDK does it automatically)
+      if (!cloudinaryUrl) {
+        cloudinary.config({
+          cloud_name: cloudName,
+          api_key: apiKey,
+          api_secret: apiSecret,
+        })
+      }
 
       const filename = data.filename || file.name || 'upload'
       // Use original filename without extension as public_id
