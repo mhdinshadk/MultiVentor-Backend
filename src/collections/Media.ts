@@ -1,13 +1,14 @@
 import type { CollectionConfig } from 'payload'
+import { uploadToCloudinary } from '../hooks/uploadToCloudinary'
 
 export const Media: CollectionConfig = {
   slug: 'media',
 
   hooks: {
+    beforeChange: [uploadToCloudinary],
     afterRead: [
       ({ doc }) => {
-        // Backward compatibility for records created before the Cloudinary plugin
-        if (!doc.url && doc.cloudinaryUrl) {
+        if (doc.cloudinaryUrl) {
           doc.url = doc.cloudinaryUrl
         }
         return doc
@@ -24,6 +25,7 @@ export const Media: CollectionConfig = {
 
   upload: {
     staticDir: 'media',
+    disableLocalStorage: true,
     imageSizes: [
       {
         name: 'thumbnail',
