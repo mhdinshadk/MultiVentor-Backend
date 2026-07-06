@@ -1,5 +1,12 @@
 import type { CollectionBeforeChangeHook } from 'payload'
-import crypto from 'crypto'
+import { v2 as cloudinary } from 'cloudinary'
+
+// Configure Cloudinary once
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+})
 
 export const uploadToCloudinary: CollectionBeforeChangeHook = async ({
   data,
@@ -20,44 +27,39 @@ export const uploadToCloudinary: CollectionBeforeChangeHook = async ({
     }
 
     try {
-      const buffer = (file as any).buffer || (file as any).data
+      const buffer = file.buffer || file.data
       if (!buffer) {
+        console.warn('No file buffer or data found for Cloudinary upload.')
         return data
       }
 
-      const timestamp = Math.round(new Date().getTime() / 1000)
       const filename = data.filename || file.name || 'upload'
       // Use original filename without extension as public_id
       const publicId = filename.substring(0, filename.lastIndexOf('.')) || filename
 
-      // Sort and sign parameters
-      const params = `public_id=${publicId}&timestamp=${timestamp}`
-      const stringToSign = `${params}${apiSecret}`
-      const signature = crypto.createHash('sha1').update(stringToSign).digest('hex')
-
-      const formData = new FormData()
-      const base64Data = `data:${file.mimeType};base64,${buffer.toString('base64')}`
-
-      formData.append('file', base64Data)
-      formData.append('api_key', apiKey)
-      formData.append('timestamp', timestamp.toString())
-      formData.append('public_id', publicId)
-      formData.append('signature', signature)
-
-      console.log(`[Cloudinary] Uploading ${filename} to Cloudinary...`)
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: 'POST',
-        body: formData,
+      console.log(`[Cloudinary] Uploading ${filename} to Cloudinary using SDK...`)
+      
+      const uploadResult = await new Promise<any>((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            public_id: publicId,
+            resource_type: 'auto',
+          },
+          (error, result) => {
+            if (error) {
+              reject(error)
+            } else {
+              resolve(result)
+            }
+          }
+        )
+        stream.write(buffer)
+        stream.end()
       })
 
-      const resData = await response.json()
-      if (!response.ok) {
-        throw new Error(resData.error?.message || 'Failed to upload to Cloudinary')
-      }
-
-      console.log(`[Cloudinary] Successfully uploaded: ${resData.secure_url}`)
+      console.log(`[Cloudinary] Successfully uploaded to Cloudinary: ${uploadResult.secure_url}`)
       // Override the url to use Cloudinary's secure URL
-      data.url = resData.secure_url
+      data.url = uploadResult.secure_url
     } catch (err) {
       console.error('[Cloudinary] Upload hook error:', err)
     }
