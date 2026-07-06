@@ -1,18 +1,15 @@
 import type { CollectionBeforeChangeHook } from 'payload'
-import { v2 as cloudinary } from 'cloudinary'
-
-// Configure Cloudinary once
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-})
 
 export const uploadToCloudinary: CollectionBeforeChangeHook = async ({
   data,
   req,
   operation,
 }) => {
+  // Guard clause to prevent browser execution
+  if (typeof window !== 'undefined') {
+    return data
+  }
+
   // Check if there is an uploaded file
   const file = (req.file || (req.files && req.files.file)) as any
 
@@ -32,6 +29,16 @@ export const uploadToCloudinary: CollectionBeforeChangeHook = async ({
         console.warn('No file buffer or data found for Cloudinary upload.')
         return data
       }
+
+      // Dynamically import cloudinary SDK (server-only)
+      const { v2: cloudinary } = await import('cloudinary')
+
+      // Configure Cloudinary on the server
+      cloudinary.config({
+        cloud_name: cloudName,
+        api_key: apiKey,
+        api_secret: apiSecret,
+      })
 
       const filename = data.filename || file.name || 'upload'
       // Use original filename without extension as public_id
@@ -60,6 +67,7 @@ export const uploadToCloudinary: CollectionBeforeChangeHook = async ({
       console.log(`[Cloudinary] Successfully uploaded to Cloudinary: ${uploadResult.secure_url}`)
       // Override the url to use Cloudinary's secure URL
       data.url = uploadResult.secure_url
+      data.cloudinaryUrl = uploadResult.secure_url
     } catch (err) {
       console.error('[Cloudinary] Upload hook error:', err)
     }

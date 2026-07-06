@@ -42,6 +42,14 @@ export const Media: CollectionConfig = {
 
   hooks: {
     beforeChange: [uploadToCloudinary],
+    afterRead: [
+      ({ doc }) => {
+        if (doc.cloudinaryUrl) {
+          doc.url = doc.cloudinaryUrl;
+        }
+        return doc;
+      },
+    ],
   },
 
   access: {
@@ -77,6 +85,14 @@ export const Media: CollectionConfig = {
       name: "alt",
       type: "text",
       required: true,
+    },
+    {
+      name: "cloudinaryUrl",
+      type: "text",
+      admin: {
+        readOnly: true,
+        position: "sidebar",
+      },
     },
   ],
 };
