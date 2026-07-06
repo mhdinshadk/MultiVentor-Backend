@@ -35,9 +35,14 @@
 // }
 
 import type { CollectionConfig } from "payload";
+import { uploadToCloudinary } from "../hooks/uploadToCloudinary";
 
 export const Media: CollectionConfig = {
   slug: "media",
+
+  hooks: {
+    beforeChange: [uploadToCloudinary],
+  },
 
   access: {
     read: () => true, // Allow everyone to read media
