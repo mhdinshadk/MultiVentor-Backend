@@ -1,11 +1,12 @@
 import type { CollectionConfig } from 'payload'
-import { uploadToCloudinary } from '../hooks/uploadToCloudinary'
+import { uploadToCloudinary, deleteFromCloudinary } from '../hooks/uploadToCloudinary'
 
 export const Media: CollectionConfig = {
   slug: 'media',
 
   hooks: {
     beforeChange: [uploadToCloudinary],
+    afterDelete: [deleteFromCloudinary],
     afterRead: [
       ({ doc }) => {
         if (doc.cloudinaryUrl) {
@@ -51,6 +52,22 @@ export const Media: CollectionConfig = {
     },
     {
       name: 'cloudinaryUrl',
+      type: 'text',
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
+    },
+    {
+      name: 'cloudinaryPublicId',
+      type: 'text',
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
+    },
+    {
+      name: 'imageFormat',
       type: 'text',
       admin: {
         hidden: true,
