@@ -100,6 +100,12 @@ export const uploadToCloudinary: CollectionBeforeChangeHook = async ({
             }
           }
         )
+
+        // Attach error event listener to prevent uncaught stream crashes!
+        stream.on('error', (err) => {
+          reject(err)
+        })
+
         stream.write(buffer)
         stream.end()
       })
