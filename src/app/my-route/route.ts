@@ -1,40 +1,33 @@
 import { v2 as cloudinary } from 'cloudinary'
-import { getCloudinaryCredentials, isCloudinaryConfigured } from '../../utilities/cloudinaryEnv'
+import { getCredentials } from '../../services/cloudinary/config'
 
 export const GET = async () => {
-  const credentials = getCloudinaryCredentials()
+  try {
+    const creds = getCredentials()
 
-  const status = {
-    configured: isCloudinaryConfigured(),
-    cloudNameSet: !!credentials?.cloudName,
-    apiKeySet: !!credentials?.apiKey,
-    apiSecretSet: !!credentials?.apiSecret,
-    testUpload: 'Not run yet',
-  }
-
-  if (credentials) {
+    // Configure Cloudinary for the test request
     cloudinary.config({
-      cloud_name: credentials.cloudName,
-      api_key: credentials.apiKey,
-      api_secret: credentials.apiSecret,
+      cloud_name: creds.cloudName,
+      api_key: creds.apiKey,
+      api_secret: creds.apiSecret,
     })
 
-    try {
-      const pixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
-      const uploadResult = await cloudinary.uploader.upload(pixel, {
-        folder: 'test',
-        public_id: `test_pixel_${Date.now()}`,
-      })
+    // Try uploading a 1x1 transparent pixel base64 image
+    const pixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+    const uploadResult = await cloudinary.uploader.upload(pixel, {
+      folder: 'test',
+      public_id: 'test_pixel_route',
+    })
 
-      status.testUpload = 'Success: ' + uploadResult.secure_url
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : JSON.stringify(err)
-      status.testUpload = 'Error: ' + message
-    }
-  } else {
-    status.testUpload =
-      'Error: Set CLOUDINARY_URL or CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET on Render.'
+    return Response.json({
+      status: 'success',
+      url: uploadResult.secure_url,
+      cloudName: creds.cloudName,
+    })
+  } catch (err: any) {
+    return Response.json({
+      status: 'error',
+      message: err.message || err,
+    })
   }
-
-  return Response.json(status)
 }

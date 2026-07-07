@@ -1,12 +1,13 @@
 import type { CollectionConfig } from 'payload'
-import { uploadToCloudinary, deleteFromCloudinary } from '../hooks/uploadToCloudinary'
+import { beforeChangeHook, afterDeleteHook, afterErrorHook } from '../hooks/media'
 
 export const Media: CollectionConfig = {
   slug: 'media',
 
   hooks: {
-    beforeChange: [uploadToCloudinary],
-    afterDelete: [deleteFromCloudinary],
+    beforeChange: [beforeChangeHook],
+    afterDelete: [afterDeleteHook],
+    afterError: [afterErrorHook],
     afterRead: [
       ({ doc }) => {
         if (doc.cloudinaryUrl) {
