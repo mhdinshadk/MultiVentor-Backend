@@ -1,6 +1,6 @@
 import { CloudinaryValidationError } from '../../utilities/errors'
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50 MB (sharp compresses to <10 MB before Cloudinary upload)
 const ALLOWED_MIME_TYPES = [
   'image/jpeg',
   'image/jpg',
@@ -23,7 +23,7 @@ export function validateImageFile(file: any): void {
 
   // Validate size
   if (file.size > MAX_FILE_SIZE) {
-    throw new CloudinaryValidationError('File size exceeds the 10 MB upload limit.')
+    throw new CloudinaryValidationError('File size exceeds the 50 MB upload limit.')
   }
 
   // Validate MIME type

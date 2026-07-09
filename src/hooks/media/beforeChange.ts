@@ -32,8 +32,9 @@ export const beforeChangeHook: CollectionBeforeChangeHook = async ({
 
     const buffer = file.buffer || file.data
 
-    // 5. Upload buffer stream to Cloudinary
-    const uploadResult = await uploadImageStream(buffer, folder, uniqueId)
+    // 5. Upload compressed buffer stream to Cloudinary
+    const mimeType = file.mimetype || file.mimeType || 'image/jpeg'
+    const uploadResult = await uploadImageStream(buffer, folder, uniqueId, mimeType)
 
     // 6. Save tracking ID to request context to clean up if DB write fails
     ;(req as any).cloudinaryUploadedPublicId = uploadResult.public_id

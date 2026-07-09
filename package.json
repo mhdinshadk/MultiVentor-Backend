@@ -41,6 +41,7 @@
     "@types/node": "22.19.9",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "@types/sharp": "^0.32.0",
     "@types/streamifier": "^0.1.2",
     "@vitejs/plugin-react": "4.5.2",
     "eslint": "^9.16.0",
